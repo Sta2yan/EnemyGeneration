@@ -1,20 +1,23 @@
 using System;
 using System.Collections;
+using System.Collections.Generic;
 using UnityEngine;
 
 public class Spawner : MonoBehaviour
 {
     [SerializeField] private Enemy _enemy;
-    [SerializeField] private SpawnPoint[] _spawnPoints = new SpawnPoint[0];
+    [SerializeField] private List<SpawnPoint> _spawnPoints = new List<SpawnPoint>();
 
     private WaitForSeconds _sleep = new WaitForSeconds(2);
     private Coroutine _coroutine;
+
+    public bool IsActive { get; private set; }
 
     private bool _isFreePoints
     {
         get
         {
-            for (int i = 0; i < _spawnPoints.Length; i++)
+            for (int i = 0; i < _spawnPoints.Count; i++)
             {
                 if (_spawnPoints[i].IsFree)
                     return true;
@@ -26,43 +29,47 @@ public class Spawner : MonoBehaviour
 
     private void Awake()
     {
-        _coroutine = StartCoroutine(Generation());
+        StartGeneration();
     }
 
-    public void Init(SpawnPoint spawnPoint)
+    public void AddNewPoint(SpawnPoint spawnPoint)
     {
-        Array.Resize(ref _spawnPoints, _spawnPoints.Length + 1);
-        _spawnPoints[_spawnPoints.Length - 1] = spawnPoint;
+        _spawnPoints.Add(spawnPoint);
     }
 
     public void StartGeneration()
     {
+        IsActive = true;
         _coroutine = StartCoroutine(Generation());
     }
 
     public void StopGeneration()
     {
+        IsActive = false;
+
         if (_coroutine != null)
             StopCoroutine(_coroutine);
     }
 
     private IEnumerator Generation()
     {
-        if (_isFreePoints)
+        while (IsActive)
         {
-            int index;
-
-            do
+            if (_isFreePoints)
             {
-                index = UnityEngine.Random.Range(0, _spawnPoints.Length);
+                int index;
+
+                do
+                {
+                    index = UnityEngine.Random.Range(0, _spawnPoints.Count);
+                }
+                while (_spawnPoints[index].IsFree == false);
+
+                Debug.Log("Появился в " + index);
+                Instantiate(_enemy, _spawnPoints[index].transform.position, Quaternion.identity);
             }
-            while (_spawnPoints[index].IsFree == false);
 
-            Debug.Log("Появился в " + index);
-            Instantiate(_enemy, _spawnPoints[index].transform.position, Quaternion.identity);
+            yield return _sleep;
         }
-
-        yield return _sleep;
-        _coroutine = StartCoroutine(Generation());
     }
 }

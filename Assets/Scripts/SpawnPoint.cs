@@ -11,7 +11,7 @@ public class SpawnPoint : MonoBehaviour
         _spawner = GetComponentInParent<Spawner>();
 
         if (_spawner != null)
-            _spawner.Init(this);
+            _spawner.AddNewPoint(this);
         else
             Debug.Log("Спавнер не обнаружен!");
     }
